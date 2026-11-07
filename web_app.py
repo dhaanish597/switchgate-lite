@@ -211,7 +211,7 @@ def rollback_action(req: RollbackRequest):
 @app.get("/api/switch/context")
 def get_switch_context():
     try:
-        messages = bridge.get_room_messages(limit=25)
+        messages = bridge.get_room_messages(bridge.triage_room_id)
         return {"messages": messages}
     except Exception as e:
         return {"messages": [], "error": str(e)}
