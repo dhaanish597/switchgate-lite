@@ -1,0 +1,18 @@
+{
+  "policy_id": "POL-FF-2026-01",
+  "allowed_environments": ["production", "staging"],
+  "protected_flags": ["root_db_migration_lock", "pci_audit_logging_enabled"],
+  "allowed_flags": [
+    "checkout_v2_new_payment_flow",
+    "search_ experimental_reranker",
+    "realtime_webhook_fanout"
+  ],
+  "authorized_human_approvers": [
+    "priya",
+    "sam",
+    "dhaanish",
+    "oncall-lead"
+  ],
+  "min_error_rate_pct_for_auto_proposal": 5.0,
+  "require_sha256_prefix_len": 8
+}

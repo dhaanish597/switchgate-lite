@@ -1,0 +1,90 @@
+version: 2
+metadata:
+  name: switchgate-lite-approval-workflow
+  description: >
+    Two-room Switch AI operations approval workflow for feature-flag rollbacks
+    with SHA-256 proposal binding, policy auditing, human approval gating, and
+    deterministic SQLite sandbox execution and rollback.
+
+resources:
+  docs:
+    - id: doc-rollback-policy
+      title: Production Feature-Flag Rollback Policy
+      visibility: room_members
+      content: |
+        1. Only non-locked feature flags may be toggled or rolled back.
+        2. Every proposed change must include exact flag_key, target_enabled_state, and SHA-256 digest.
+        3. Human approval in #approval-vault (/approve <proposal_id> <sha256_prefix>) is mandatory.
+        4. Any parameter modification after proposal creation invalidates the SHA-256 digest.
+
+  roles:
+    - id: role-triage-agent
+      name: Incident Triage Agent
+      instructions: >
+        Investigate incoming production incident reports using read-only tools
+        (get_feature_flag_state, get_service_error_metrics) and propose a safe
+        feature-flag rollback via stage_flag_rollback_proposal. Never mutate state directly.
+    - id: role-policy-auditor
+      name: Policy Auditor Agent
+      instructions: >
+        Audit every proposed feature-flag rollback against doc-rollback-policy.
+        Reject locked flags or missing justifications; post audit verdict and SHA-256 digest.
+    - id: role-action-steward
+      name: Deterministic Action Executor
+      instructions: >
+        Listen for verified human /approve or /rollback commands, validate SHA-256 parameter
+        binding, execute the SQLite feature-flag change, and post an auditable receipt.
+
+  agents:
+    - id: triage-agent
+      handle: "@triage-agent"
+      provider: custom_protocol
+      machine: local-host
+      directory: "./agents/triage_readonly"
+      allow_existing: true
+      addressing: owner_and_owner_agents
+      role: role-triage-agent
+
+    - id: policy-auditor
+      handle: "@policy-auditor"
+      provider: custom_protocol
+      machine: local-host
+      directory: "./agents/auditor_readonly"
+      allow_existing: true
+      addressing: owner_and_owner_agents
+      role: role-policy-auditor
+
+    - id: action-steward
+      handle: "@action-steward"
+      provider: custom_protocol
+      machine: local-host
+      directory: "./agents/executor"
+      allow_existing: true
+      addressing: anyone
+      role: role-action-steward
+
+  rooms:
+    - id: room-incident-triage
+      slug: "incident-triage"
+      name: "#incident-triage"
+      description: "Incident reporting, AI root-cause investigation, and policy auditing."
+      visibility: public_read_write
+      attached_docs:
+        - doc-rollback-policy
+      members:
+        agents:
+          - triage-agent
+          - policy-auditor
+          - action-steward
+
+    - id: room-approval-vault
+      slug: "approval-vault"
+      name: "#approval-vault"
+      description: "Human approval airlock, SHA-256 verification, execution receipts, and rollback."
+      visibility: public_read_write
+      attached_docs:
+        - doc-rollback-policy
+      members:
+        agents:
+          - policy-auditor
+          - action-steward

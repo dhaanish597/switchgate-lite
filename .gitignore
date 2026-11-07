@@ -1,0 +1,9 @@
+.env
+.env.local
+data/*.db
+data/*.db-journal
+data/*.db-wal
+logs/*.jsonl
+__pycache__/
+*.pyc
+.DS_Store
