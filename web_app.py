@@ -108,13 +108,9 @@ def health_check():
 @app.get("/api/status")
 def get_status():
     flags = db.list_flags()
-    proposals = db.list_proposals(limit=5)
-    receipts = db.list_receipts(limit=5)
     return {
         "flags": flags,
         "active_session": ACTIVE_SESSION,
-        "recent_proposals": proposals,
-        "recent_receipts": receipts,
     }
 
 
